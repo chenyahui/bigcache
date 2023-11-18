@@ -60,6 +60,7 @@ func (s *cacheShard) getWithInfo(key string, hashedKey uint64) (entry []byte, re
 }
 
 func (s *cacheShard) get(key string, hashedKey uint64) ([]byte, error) {
+	// 加速度
 	s.lock.RLock()
 	wrappedEntry, err := s.getWrappedEntry(hashedKey)
 	if err != nil {
@@ -69,6 +70,7 @@ func (s *cacheShard) get(key string, hashedKey uint64) ([]byte, error) {
 	if entryKey := readKeyFromEntry(wrappedEntry); key != entryKey {
 		s.lock.RUnlock()
 		s.collision()
+		// 出现碰撞
 		if s.isVerbose {
 			s.logger.Printf("Collision detected. Both %q and %q have the same hash %x", key, entryKey, hashedKey)
 		}
@@ -118,18 +120,22 @@ func (s *cacheShard) getValidWrapEntry(key string, hashedKey uint64) ([]byte, er
 }
 
 func (s *cacheShard) set(key string, hashedKey uint64, entry []byte) error {
+	// 这里可能是一个小的优化点.
 	currentTimestamp := uint64(s.clock.Epoch())
 
 	s.lock.Lock()
 
 	if previousIndex := s.hashmap[hashedKey]; previousIndex != 0 {
+		// 如果hash冲突了，直接删除之前的，本身就是缓存，没有必须存储的理由
 		if previousEntry, err := s.entries.Get(int(previousIndex)); err == nil {
+			// 1. 清空value
 			resetHashFromEntry(previousEntry)
 			//remove hashkey
 			delete(s.hashmap, hashedKey)
 		}
 	}
 
+	// 如果开启了自动清理， set的时候就不去清理他，否则每次都要检查一下
 	if !s.cleanEnabled {
 		if oldestEntry, err := s.entries.Peek(); err == nil {
 			s.onEvict(oldestEntry, currentTimestamp, s.removeOldestEntry)
