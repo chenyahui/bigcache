@@ -36,6 +36,8 @@ type cacheShard struct {
 func (s *cacheShard) getWithInfo(key string, hashedKey uint64) (entry []byte, resp Response, err error) {
 	currentTime := uint64(s.clock.Epoch())
 	s.lock.RLock()
+
+	// 根据hashed_key, 取出完整的payload
 	wrappedEntry, err := s.getWrappedEntry(hashedKey)
 	if err != nil {
 		s.lock.RUnlock()
@@ -60,7 +62,7 @@ func (s *cacheShard) getWithInfo(key string, hashedKey uint64) (entry []byte, re
 }
 
 func (s *cacheShard) get(key string, hashedKey uint64) ([]byte, error) {
-	// 加速度
+	// 加读锁
 	s.lock.RLock()
 	wrappedEntry, err := s.getWrappedEntry(hashedKey)
 	if err != nil {
@@ -147,9 +149,12 @@ func (s *cacheShard) set(key string, hashedKey uint64, entry []byte) error {
 	for {
 		if index, err := s.entries.Push(w); err == nil {
 			s.hashmap[hashedKey] = uint32(index)
+			// 解锁
 			s.lock.Unlock()
 			return nil
 		}
+
+		// 如果塞不下，直接删一个
 		if s.removeOldestEntry(NoSpace) != nil {
 			s.lock.Unlock()
 			return errors.New("entry is bigger than max shard size")
