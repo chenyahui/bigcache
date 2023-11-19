@@ -130,7 +130,7 @@ func (s *cacheShard) set(key string, hashedKey uint64, entry []byte) error {
 	if previousIndex := s.hashmap[hashedKey]; previousIndex != 0 {
 		// 如果hash冲突了，直接删除之前的，本身就是缓存，没有必须存储的理由
 		if previousEntry, err := s.entries.Get(int(previousIndex)); err == nil {
-			// 1. 清空value
+			// 1. 只清空hash
 			resetHashFromEntry(previousEntry)
 			//remove hashkey
 			delete(s.hashmap, hashedKey)
