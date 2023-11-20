@@ -63,7 +63,7 @@ func getNeededSize(length int) int {
 func NewBytesQueue(capacity int, maxCapacity int, verbose bool) *BytesQueue {
 	return &BytesQueue{
 		array:        make([]byte, capacity),
-		capacity:     capacity,
+		capacity:     capacity, // 初始化长度
 		maxCapacity:  maxCapacity,
 		headerBuffer: make([]byte, binary.MaxVarintLen32),
 		tail:         leftMarginIndex,

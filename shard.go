@@ -338,7 +338,7 @@ func (s *cacheShard) copyHashedKeys() (keys []uint64, next int) {
 }
 
 func (s *cacheShard) removeOldestEntry(reason RemoveReason) error {
-	// 注意，这里是pop
+	// 注意，这里是pop，但是pop的时候，什么也没做。
 	oldest, err := s.entries.Pop()
 	if err == nil {
 		hash := readHashFromEntry(oldest)
