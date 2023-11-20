@@ -141,6 +141,7 @@ func (q *BytesQueue) allocateAdditionalMemory(minimum int) {
 }
 
 func (q *BytesQueue) push(data []byte, len int) {
+	// 最前面有个varint，代表整体的长度
 	headerEntrySize := binary.PutUvarint(q.headerBuffer, uint64(len))
 	q.copy(q.headerBuffer, headerEntrySize)
 
