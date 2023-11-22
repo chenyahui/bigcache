@@ -128,7 +128,7 @@ func (s *cacheShard) set(key string, hashedKey uint64, entry []byte) error {
 	s.lock.Lock()
 
 	if previousIndex := s.hashmap[hashedKey]; previousIndex != 0 {
-		// 如果hash冲突了，直接删除之前的，本身就是缓存，没有必须存储的理由
+		// 如果key已存在或者hash冲突了，直接删除之前的，本身就是缓存，没有必须存储的理由
 		if previousEntry, err := s.entries.Get(int(previousIndex)); err == nil {
 			// 1. 只清空hash
 			resetHashFromEntry(previousEntry)
@@ -346,6 +346,8 @@ func (s *cacheShard) removeOldestEntry(reason RemoveReason) error {
 			// entry has been explicitly deleted with resetHashFromEntry, ignore
 			return nil
 		}
+
+		// 1. 相当于打个标记，不用重复执行了onRemove和delete了
 		delete(s.hashmap, hash)
 		s.onRemove(oldest, reason)
 		if s.statsEnabled {
